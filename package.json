@@ -1,0 +1,223 @@
+{
+  "name": "anvil-bridge",
+  "displayName": "Anvil Bridge",
+  "description": "把 VS Code 工作区变成 MCP 服务器，让任何 AI 通过 Streamable HTTP 读写代码、执行命令；自带审批模式与一键 Cloudflare 公网隧道。",
+  "version": "1.0.1",
+  "publisher": "Ti",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:lanternBridge.sidebar"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "test": "node test/checkpoints.js && node test/smoke.js && node test/controller.js",
+    "vscode:prepublish": "npm run build",
+    "package": "node esbuild.js && node -e \"require('fs').mkdirSync('release',{recursive:true})\" && npx --yes @vscode/vsce@3 package --allow-missing-repository --out release"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "lanternBridge.start",
+        "title": "Anvil Bridge: Start",
+        "icon": "$(play)"
+      },
+      {
+        "command": "lanternBridge.stop",
+        "title": "Anvil Bridge: Stop and Revoke Sessions",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "lanternBridge.panel",
+        "title": "Anvil Bridge: Open Sidebar"
+      },
+      {
+        "command": "lanternBridge.copyUrl",
+        "title": "Anvil Bridge: Copy Private MCP URL"
+      },
+      {
+        "command": "lanternBridge.rotate",
+        "title": "Anvil Bridge: Rotate Access Token"
+      },
+      {
+        "command": "lanternBridge.tunnel",
+        "title": "Anvil Bridge: Start Cloudflare Quick Tunnel"
+      },
+      {
+        "command": "lanternBridge.stopTunnel",
+        "title": "Anvil Bridge: Stop Tunnel"
+      },
+      {
+        "command": "lanternBridge.clearLog",
+        "title": "Anvil Bridge: Clear Activity Log",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "lanternBridge.approvalMode",
+        "title": "Anvil Bridge: Switch to Approval Mode"
+      },
+      {
+        "command": "lanternBridge.fullAccessMode",
+        "title": "Anvil Bridge: Enable Full Access"
+      },
+      {
+        "command": "lanternBridge.copyPrompt",
+        "title": "Anvil Bridge: Copy Connection Prompt"
+      },
+      {
+        "command": "lanternBridge.terminals",
+        "title": "Anvil Bridge: Show Persistent Terminals",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "lanternBridge.skills",
+        "title": "Anvil Bridge: Manage Skills",
+        "icon": "$(book)"
+      },
+      {
+        "command": "lanternBridge.checkpoints",
+        "title": "Anvil Bridge: 检查点",
+        "icon": "$(history)"
+      },
+      {
+        "command": "lanternBridge.copyReconnectPrompt",
+        "title": "Anvil Bridge: Copy Reconnect Prompt",
+        "icon": "$(copy)"
+      }
+    ],
+    "configuration": {
+      "title": "Anvil Bridge",
+      "properties": {
+        "lanternBridge.port": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 65535,
+          "scope": "machine",
+          "description": "Local TCP port. 0 chooses an available port. Restart to apply."
+        },
+        "lanternBridge.enableCommands": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "description": "Approval mode only: allow shell requests with local approval. Full access enables shell commands without individual approval. Shells have OS user permissions, not a workspace sandbox."
+        },
+        "lanternBridge.cloudflaredPath": {
+          "type": "string",
+          "default": "cloudflared",
+          "scope": "machine",
+          "description": "Installed cloudflared executable. No automatic download or installation."
+        },
+        "lanternBridge.resultFormat": {
+          "type": "string",
+          "enum": [
+            "text",
+            "both"
+          ],
+          "default": "text",
+          "scope": "machine",
+          "enumDescriptions": [
+            "Send each tool result once, as JSON text (half the bandwidth and model context).",
+            "Also attach structuredContent for clients that render it; doubles the payload."
+          ],
+          "description": "How MCP tool results are encoded. Applies to new tool calls immediately."
+        },
+        "lanternBridge.windowsShell": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "pwsh",
+            "powershell"
+          ],
+          "default": "auto",
+          "scope": "machine",
+          "enumDescriptions": [
+            "Use PowerShell 7+ (pwsh) when it is on PATH, otherwise Windows PowerShell 5.1.",
+            "Always launch pwsh (fails if it is not installed).",
+            "Always launch Windows PowerShell 5.1."
+          ],
+          "description": "Windows only: which PowerShell run_command launches for new terminals and direct commands. Ignored on other platforms."
+        },
+        "lanternBridge.autoTunnel": {
+          "type": "boolean",
+          "default": true,
+          "scope": "machine",
+          "description": "启动服务后自动运行 cloudflared quick tunnel（cloudflared tunnel --url http://localhost:<port> --http-host-header localhost:<port>）。"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "lanternBridge",
+          "title": "Anvil Bridge",
+          "icon": "activitybar.svg"
+        }
+      ]
+    },
+    "views": {
+      "lanternBridge": [
+        {
+          "type": "webview",
+          "id": "lanternBridge.sidebar",
+          "name": "Anvil Bridge",
+          "contextualTitle": "Anvil Bridge"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "lanternBridge.skills",
+          "when": "view == lanternBridge.sidebar",
+          "group": "navigation@1"
+        },
+        {
+          "command": "lanternBridge.checkpoints",
+          "when": "view == lanternBridge.sidebar",
+          "group": "navigation@2"
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "node-pty": "1.1.0"
+  },
+  "icon": "icon.png",
+  "keywords": [
+    "mcp",
+    "model context protocol",
+    "ai",
+    "agent",
+    "bridge",
+    "cloudflare",
+    "tunnel"
+  ],
+  "galleryBanner": {
+    "color": "#1c1c1e",
+    "theme": "dark"
+  }
+}
