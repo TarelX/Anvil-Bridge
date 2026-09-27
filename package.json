@@ -2,7 +2,7 @@
   "name": "anvil-bridge",
   "displayName": "Anvil Bridge",
   "description": "把 VS Code 工作区变成 MCP 服务器，让任何 AI 通过 Streamable HTTP 读写代码、执行命令；自带审批模式与一键 Cloudflare 公网隧道。",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "Ti",
   "license": "MIT",
   "engines": {
@@ -30,7 +30,7 @@
   "scripts": {
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
-    "test": "node test/checkpoints.js && node test/smoke.js && node test/controller.js",
+    "test": "node test/cloudflared.js && node test/checkpoints.js && node test/smoke.js && node test/controller.js",
     "vscode:prepublish": "npm run build",
     "package": "node esbuild.js && node -e \"require('fs').mkdirSync('release',{recursive:true})\" && npx --yes @vscode/vsce@3 package --allow-missing-repository --out release"
   },
@@ -128,7 +128,7 @@
           "type": "string",
           "default": "cloudflared",
           "scope": "machine",
-          "description": "Installed cloudflared executable. No automatic download or installation."
+          "description": "Path to cloudflared. Leave as cloudflared to auto-detect. One-click install uses winget on Windows, and Homebrew or the official binary on macOS."
         },
         "lanternBridge.resultFormat": {
           "type": "string",

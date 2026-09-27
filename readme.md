@@ -7,7 +7,7 @@
 - **一键启动**：侧边栏点「启动」，自动监听本机端口，并生成带随机令牌的私有地址。
 - **自动公网隧道**：启动后会自动运行下面这条命令，拿到 `https://xxx.trycloudflare.com` 地址：
   `cloudflared tunnel --url http://localhost:<端口> --http-host-header localhost:<端口>`
-  没装 cloudflared 的话，可以在面板里一键安装（Windows / winget）。
+  没装 cloudflared 的话，可以在面板里一键安装（Windows 用 winget；macOS 优先 Homebrew，否则下载官方二进制）。
 - **连接提示词**：一键复制给 AI 的完整连接说明，包括 Streamable HTTP 的连接步骤、curl 示例和会话过期后的处理。
 - **两种权限模式**
   - 审批模式（默认）：每次写文件、执行命令都会弹窗，由你确认。

@@ -639,7 +639,7 @@ ${o}
       if (!det.installed) {
         this.cfState = det;
         this.changed();
-        throw Error("未找到 cloudflared：请点击「一键安装」，或在设置 lanternBridge.cloudflaredPath 中填写 cloudflared.exe 的完整路径");
+        throw Error("未找到 cloudflared：请点击「一键安装」，或在设置 lanternBridge.cloudflaredPath 中填写 cloudflared 的完整路径");
       }
       this.cfState = det;
       let r = det.executable;
@@ -738,7 +738,12 @@ ${o}
         ((this.cfBusy = !0),
           (this.cfState = Object.assign({}, this.cfState || {}, { installing: !0 })),
           this.changed(),
-          this.event("正在安装 cloudflared", "通过 winget 静默安装，可能需要几分钟"));
+          this.event(
+            "正在安装 cloudflared",
+            process.platform === "darwin"
+              ? "优先使用 Homebrew，否则下载官方二进制，可能需要几分钟"
+              : "通过 winget 静默安装，可能需要几分钟",
+          ));
         try {
           let e = await cloudflared.install(this.cfExecutable());
           ((this.cfState = e),
@@ -747,7 +752,11 @@ ${o}
                   e.alreadyInstalled ? "cloudflared 已安装" : "cloudflared 安装完成",
                   e.version || "",
                 ),
-                vscode.window.showInformationMessage("cloudflared 已就绪：" + (e.version || "已安装")))
+                vscode.window.showInformationMessage(
+                  "cloudflared 已就绪：" +
+                    (e.version || "已安装") +
+                    (e.via === "homebrew" ? "（Homebrew）" : e.via === "official" ? "（官方二进制）" : "")
+                ))
               : (this.event("cloudflared 安装失败", e.error || "未知错误"),
                 vscode.window.showErrorMessage(e.error || "cloudflared 安装失败")));
         } catch (e) {
@@ -765,23 +774,34 @@ ${o}
         o = '<span class="cf-badge unknown">未检测</span>',
         s = "开启公网隧道需要 cloudflared";
       n
-        ? ((o = '<span class="cf-badge working">安装中</span>'), (s = "正在通过 winget 安装…"))
+        ? ((o = '<span class="cf-badge working">安装中</span>'),
+          (s = process.platform === "darwin" ? "正在安装 cloudflared…" : "正在通过 winget 安装…"))
         : r
           ? ((o = '<span class="cf-badge working">检测中</span>'), (s = "正在查找 cloudflared…"))
           : e && e.installed
             ? ((o = '<span class="cf-badge ok">已安装</span>'), (s = esc((e.version || "已就绪").replace(/^cloudflared version /i, "版本 ").replace(/\s*\(built[^)]*\)/i, ""))))
             : e && e.error
               ? ((o = '<span class="cf-badge bad">不可用</span>'), (s = esc(e.error)))
-              : e && ((o = '<span class="cf-badge bad">未安装</span>'), (s = "未找到 cloudflared，可以一键安装（Windows / winget）"));
+              : e &&
+                ((o = '<span class="cf-badge bad">未安装</span>'),
+                (s =
+                  process.platform === "darwin"
+                    ? "未找到 cloudflared，可以一键安装（Homebrew 或官方二进制）"
+                    : process.platform === "win32"
+                      ? "未找到 cloudflared，可以一键安装（Windows / winget）"
+                      : "未找到 cloudflared，请按官方文档手动安装"));
       let i = r ? " disabled" : "",
         a =
           e && e.installed
             ? `<button class="link" data-command="checkCloudflared"${i}>重新检查</button>`
             : "";
-      let extra =
-        e && e.installed
-          ? ""
-          : `<div class="cf-actions"><button class="btn btn-primary" data-command="installCloudflared"${i}>${n ? "安装中…" : "一键安装"}</button><button class="btn" data-command="checkCloudflared"${i}>检查</button></div>`;
+      let canInstall = process.platform === "win32" || process.platform === "darwin",
+        extra =
+          e && e.installed
+            ? ""
+            : canInstall
+              ? `<div class="cf-actions"><button class="btn btn-primary" data-command="installCloudflared"${i}>${n ? "安装中…" : "一键安装"}</button><button class="btn" data-command="checkCloudflared"${i}>检查</button></div>`
+              : `<div class="cf-actions"><button class="btn" data-command="checkCloudflared"${i}>检查</button></div>`;
       return `<div class="group-title">隧道组件</div><div class="group"><div class="row"><span class="sq orange">${ic.cloud || ""}</span><div class="lbl"><b>cloudflared</b><span>${s}</span></div>${o}${a}</div>${extra}</div>`;
     }
     stopTunnel() {

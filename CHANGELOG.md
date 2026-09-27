@@ -34,3 +34,15 @@
   * 工具栏显示改动统计，支持 ↑ / ↓ 跳到上一处或下一处改动。
   * 分段标题显示所在函数；全量差异里每个文件的标题栏会吸顶。
 * "刷新 / 重试"按钮下方增加间距。
+
+## 1.0.2（2026-09-27）
+
+### 新增
+
+* macOS 可以一键安装 cloudflared。已安装 Homebrew 时执行 `brew install cloudflared`；没有 Homebrew，或 Homebrew 安装失败时，下载 Cloudflare 官方二进制到 `~/Library/Application Support/anvil-bridge/bin/cloudflared`，并用 GitHub 发布包的 SHA256 校验。
+* 从程序坞启动的 VS Code 找不到 Homebrew 路径时，仍会使用上面这个用户目录里的二进制。
+
+### 改进
+
+* 安装按钮和提示按系统区分：Windows 仍走 winget，macOS 不再弹出「仅支持 Windows」。
+* 找不到 cloudflared 时的路径提示不再写成 `cloudflared.exe`。
